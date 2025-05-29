@@ -23,6 +23,7 @@ class MessageResource extends JsonResource
             'sendable_id' => $this->sendable_id,
             'sendable_type' => $this->sendable_type,
             'body' => $this->body,
+            'reply_id' => $this->reply_id,
             'type' => $this->type,
             'conversation' => $this->whenLoaded('conversation', fn () => new ConversationResource($this->conversation)),
             'sendable' => $this->whenLoaded('sendable', fn () => new ChatableResource($this->sendable)),

@@ -33,7 +33,6 @@ class NotifyParticipant implements ShouldBroadcastNow
             $this->participantType = $participant->getMorphClass();
             $this->participantId = $participant->getKey();
         }
-        $this->message->replyTo = 'abc123';
 
         //  $this->dontBroadcastToCurrentUser();
 
