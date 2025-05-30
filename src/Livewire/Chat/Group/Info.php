@@ -152,8 +152,9 @@ class Info extends ModalComponent
                 'url' => $url,
             ]);
 
-            $this->cover_url = $url;
+            $this->cover_url = $this->conversation->group?->cover_url;
             $this->reset('photo');
+            $this->mount();
 
             $this->dispatch('refresh')->to(Chats::class);
             $this->dispatch('refresh')->to(Chat::class);
@@ -250,7 +251,7 @@ class Info extends ModalComponent
 
     public function render()
     {
-
+    
         $participant = $this->conversation->participant(auth()->user());
 
         //  dd($this->isWidget(),$participant);
