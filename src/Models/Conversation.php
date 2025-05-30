@@ -178,7 +178,7 @@ class Conversation extends Model
      * @param  ParticipantRole  $role  enum to assign to member
      * @param  bool  $undoAdminRemovalAction  If the user was recently removed by admin, allow re-adding.
      */
-    public function addParticipant(Model $user, ParticipantRole $role = ParticipantRole::PARTICIPANT, bool $undoAdminRemovalAction = false): Participant
+    public function addParticipant(Model $user, ParticipantRole $role = ParticipantRole::OWNER, bool $undoAdminRemovalAction = false): Participant
     {
         /** @var Participant|null $participant */
         $participant = $this->participants()
