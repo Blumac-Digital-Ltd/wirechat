@@ -11,6 +11,10 @@
         ) }}>
 
 
+    @php
+        $src = (strpos($src, 'images') !== false) ? $src : null;
+    @endphp
+
     @if ($src)
         <img  loading="lazy" @class([
             'shrink-0 w-full h-full object-cover object-center rounded-full',
