@@ -132,7 +132,7 @@ class Members extends ModalComponent
         abort_unless($participant->participantable->belongsToConversation($this->conversation), 403, 'This user does not belong to conversation');
 
         // abort if user participants is owner
-        abort_if($participant->isOwner(), 403, 'Owner role cannot be changed');
+        //abort_if($participant->isOwner(), 403, 'Owner role cannot be changed');
 
         // toggle
         if ($participant->isAdmin()) {

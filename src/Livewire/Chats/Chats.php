@@ -332,7 +332,7 @@ class Chats extends Component
     public function mount(
         $showNewChatModalButton = null,
         $allowChatsSearch = null,
-        $showHomeRouteButton = null,
+        $showHomeRouteButton = false,
         ?string $title = null,
     ) {
         // If a value is passed, use it; otherwise fallback to WireChat defaults.
