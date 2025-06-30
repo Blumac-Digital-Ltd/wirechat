@@ -190,11 +190,13 @@ class Conversation extends Model
         // Check if the participant already exists (with or without global scopes)
         if ($participant) {
             // Abort if the participant exited themselves
+            /*
             abort_if(
                 $participant->hasExited(),
                 403,
                 'Cannot add '.$user->display_name.' because they left the group.'
             );
+            */
 
             // Check if the participant was removed by an admin or owner
             if ($participant->isRemovedByAdmin()) {
