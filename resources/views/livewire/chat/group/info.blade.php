@@ -182,7 +182,7 @@
         @else
             {{-- Plain group information --}}
             <div @dusk="non_editable_group_information_section" class="flex  flex-col items-center gap-5 py-5 px-4  ">
-                <x-wirechat::avatar src="{{ $cover_url }}" class=" h-32 w-32 mx-auto" />
+                <x-wirechat::avatar src="{!! $cover_url !!}" class=" h-32 w-32 mx-auto" />
                 <h4 dusk="group_name" class="font-medium  break-all   whitespace-pre-line   text-2xl ">{{ $groupName }} </h4>
                 <p class="mx-auto">{{ __('wirechat::chat.group.info.labels.members') }}  {{ $totalParticipants }} </p>
                 <p class="font-medium break-all   whitespace-pre-line ">{{ $description }} </p>

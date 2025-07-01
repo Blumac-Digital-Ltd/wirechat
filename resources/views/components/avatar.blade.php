@@ -11,8 +11,9 @@
         ) }}>
 
     @php
-        $src = (strpos($src, 'images') !== false) ? $src : null;
+        $src = (strpos($src, 'images') !== false || strpos($src, 'wechat') !== false) ? $src : null;
     @endphp
+
 
     @if ($src)
         <img  loading="lazy" @class([
