@@ -101,8 +101,13 @@ class AddMembers extends ModalComponent
 
                 $participant = $this->conversation->participant($model, withoutGlobalScopes: true);
 
+                if($participant?->hasExited()){
+                    $participant->exited_at = null;
+                    $participant->save();
+                }
+
                 // abort if member already exited group
-                abort_if($participant?->hasExited(), 403, 'Cannot add '.$model->display_name.' because they left the group');
+                //abort_if($participant?->hasExited(), 403, 'Cannot add '.$model->display_name.' because they left the group');
 
                 // check if is removed - if true then
                 // abort if non admin member tries to add a participant previously removed by admin
