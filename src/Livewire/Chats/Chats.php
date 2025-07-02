@@ -331,7 +331,7 @@ class Chats extends Component
      */
     public function mount(
         $showNewChatModalButton = null,
-        $allowChatsSearch = null,
+        $allowChatsSearch = false,
         $showHomeRouteButton = false,
         ?string $title = null,
     ) {
