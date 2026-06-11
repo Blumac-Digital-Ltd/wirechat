@@ -37,7 +37,7 @@ class NotifyParticipants implements ShouldQueue
     protected $participantsTable;
 
     public function __construct(
-
+        #[WithoutRelations]
         public Conversation $conversation,
         #[WithoutRelations]
         public Message $message)

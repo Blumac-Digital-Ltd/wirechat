@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Queue\SerializesModels;
 use Namu\WireChat\Facades\WireChat;
 use Namu\WireChat\Models\Message;
@@ -17,7 +18,8 @@ class MessageCreated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithQueue,InteractsWithSockets, Queueable ,SerializesModels;
 
-    public $message;
+    #[WithoutRelations]
+    public Message $message;
     // public $receiver;
 
     public function __construct(Message $message)

@@ -759,7 +759,7 @@ class Chat extends Component
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
-    #[Computed(persist: true)]
+    #[Computed]
     public function auth()
     {
         return auth()->user();

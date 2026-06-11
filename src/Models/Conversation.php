@@ -2,7 +2,6 @@
 
 namespace Namu\WireChat\Models;
 
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -249,12 +248,12 @@ class Conversation extends Model
     /**
      * Define a relationship to fetch messages for this conversation.
      */
-    public function messages(): hasMany
+    public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
     }
 
-    public function lastMessage(): hasOne
+    public function lastMessage(): HasOne
     {
         return $this->hasOne(Message::class, 'conversation_id')->latestOfMany();
     }

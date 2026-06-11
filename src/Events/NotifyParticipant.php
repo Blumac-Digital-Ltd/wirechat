@@ -8,6 +8,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Queue\SerializesModels;
 use Namu\WireChat\Facades\WireChat;
 use Namu\WireChat\Helpers\MorphClassResolver;
@@ -23,7 +24,11 @@ class NotifyParticipant implements ShouldBroadcastNow
 
     public $participantId;
 
-    public function __construct(public Participant|Model $participant, public Message $message)
+    public function __construct(
+        #[WithoutRelations]
+        public Participant|Model $participant,
+        #[WithoutRelations]
+        public Message $message)
     {
 
         if ($participant instanceof Participant) {
