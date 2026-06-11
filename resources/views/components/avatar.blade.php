@@ -11,7 +11,7 @@
         ) }}>
 
     @php
-        $src = (strpos($src, 'images') !== false || strpos($src, 'wechat') !== false) ? $src : null;
+        $src = ($src && (strpos($src, 'images') !== false || strpos($src, 'wechat') !== false)) ? $src : null;
     @endphp
 
 
