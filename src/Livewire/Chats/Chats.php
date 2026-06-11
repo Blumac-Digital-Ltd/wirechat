@@ -25,10 +25,8 @@ class Chats extends Component
 
     /**
      * The search query.
-     *
-     * @var mixed
      */
-    public $search;
+    public ?string $search = null;
 
     /**
      * The list of conversations.
@@ -194,13 +192,15 @@ class Chats extends Component
         $perPage = 10;
         $offset = ($this->page - 1) * $perPage;
 
+        // Ensure search is a string for consistent processing.
+
+        $search = is_array($this->search) ? '' : (string) ($this->search ?? '');
+        
         $additionalConversations = $this->auth->conversations()
-            ->with([
-                'lastMessage.sendable',
-                'group.cover' => fn ($query) => $query->select('id', 'url', 'attachable_type', 'attachable_id', 'file_path'),
-            ])
-            ->when(trim($this->search ?? '') != '', fn ($query) => $this->applySearchConditions($query))
-            ->when(trim($this->search ?? '') == '', function ($query) {
+            ->with('lastMessage.sendable')
+            ->with('group.cover', fn ($query) => $query->select(['id', 'url', 'attachable_type', 'attachable_id', 'file_path']))
+            ->when(trim($search) != '', fn ($query) => $this->applySearchConditions($query, $search))
+            ->when(trim($search) == '', function ($query) {
                 /** @phpstan-ignore-next-line */
                 return $query->withoutDeleted()->withoutBlanks();
             })
@@ -252,7 +252,7 @@ class Chats extends Component
 
             return $conversation->loadMissing([
                 'lastMessage',
-                'group.cover' => fn ($query) => $query->select('id', 'url', 'attachable_type', 'attachable_id', 'file_path'),
+                'group.cover' => fn ($query) => $query->select(['id', 'url', 'attachable_type', 'attachable_id', 'file_path']),
             ]);
         });
     }
@@ -272,8 +272,9 @@ class Chats extends Component
      * Applies search conditions to the conversations query.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query  The query builder instance.
+     * @param  string  $search  The search term to apply.
      */
-    protected function applySearchConditions($query): \Illuminate\Database\Eloquent\Builder
+    protected function applySearchConditions($query, string $search = ''): \Illuminate\Database\Eloquent\Builder
     {
         $searchableFields = WireChat::searchableFields();
         $groupSearchableFields = ['name', 'description'];
@@ -281,7 +282,7 @@ class Chats extends Component
 
         // Use withDeleted to reverse withoutDeleted in order to make deleted chats appear in search.
         /** @phpstan-ignore-next-line */
-        return $query->withDeleted()->where(function ($query) use ($searchableFields, $groupSearchableFields, &$columnCache) {
+        return $query->withDeleted()->where(function ($query) use ($searchableFields, $groupSearchableFields, $search, &$columnCache) {
             // Search in participants' participantable fields.
             $query->whereHas('participants', function ($subquery) use ($searchableFields, &$columnCache) {
                 $subquery->whereHas('participantable', function ($query2) use ($searchableFields, &$columnCache) {
@@ -289,7 +290,7 @@ class Chats extends Component
                         $table = $query3->getModel()->getTable();
                         foreach ($searchableFields as $field) {
                             if ($this->columnExists($table, $field, $columnCache)) {
-                                $query3->orWhere($field, 'LIKE', '%'.$this->search.'%');
+                                $query3->orWhere($field, 'LIKE', '%'.$search.'%');
                             }
                         }
                     });
@@ -297,10 +298,10 @@ class Chats extends Component
             });
 
             // Search in group fields directly.
-            return $query->orWhereHas('group', function ($groupQuery) use ($groupSearchableFields) {
-                $groupQuery->where(function ($query4) use ($groupSearchableFields) {
+            return $query->orWhereHas('group', function ($groupQuery) use ($groupSearchableFields, $search) {
+                $groupQuery->where(function ($query4) use ($groupSearchableFields, $search) {
                     foreach ($groupSearchableFields as $field) {
-                        $query4->orWhere($field, 'LIKE', '%'.$this->search.'%');
+                        $query4->orWhere($field, 'LIKE', '%'.$search.'%');
                     }
                 });
             });
