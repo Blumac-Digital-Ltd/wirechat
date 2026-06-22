@@ -10,7 +10,6 @@ use Livewire\Component;
 use Namu\WireChat\Facades\WireChat;
 use Namu\WireChat\Helpers\MorphClassResolver;
 use Namu\WireChat\Livewire\Concerns\Widget;
-use Namu\WireChat\Models\Conversation;
 
 /**
  * Chats Component
@@ -26,12 +25,12 @@ class Chats extends Component
     /**
      * The search query.
      *
-     * @var mixed
+     * @var string|null
      */
     public $search;
 
     /**
-     * The list of conversations.
+     * The list of conversations (cleared on dehydrate/hydrate).
      *
      * @var \Illuminate\Support\Collection|array
      */
@@ -72,6 +71,35 @@ class Chats extends Component
     public $selectedConversationId;
 
     /**
+     * Dehydrate the component - clear conversations to prevent serialization.
+     *
+     * @return void
+     */
+    public function dehydrate()
+    {
+        // Always clear conversations before serialization
+        // This prevents Laravel 13 routing/caching issues
+        $this->conversations = collect();
+    }
+
+    /**
+     * Hydrate the component - reset conversations.
+     *
+     * @return void
+     */
+    public function hydrate()
+    {
+        // Clear conversations on hydrate - will be loaded in render()
+        $this->conversations = collect();
+        
+        // Ensure search is always a string or null, not an array
+        /** @phpstan-ignore-next-line */
+        if (!is_string($this->search) && !is_null($this->search)) {
+            $this->search = null;
+        }
+    }
+
+    /**
      * Returns an array of event listeners.
      *
      * @return array
@@ -79,7 +107,7 @@ class Chats extends Component
     public function getListeners()
     {
         $user = $this->auth;
-        $encodedType = MorphClassResolver::encode($user?->getMorphClass());
+        $encodedType = $user ? MorphClassResolver::encode($user->getMorphClass()) : '';
         $userId = $user?->getKey();
 
         // dd($encodedType,$userId);
@@ -179,7 +207,7 @@ class Chats extends Component
      */
     public function updatedSearch($value)
     {
-        $this->conversations = []; // Clear previous results when a new search is made.
+        $this->conversations = collect(); // Clear previous results when a new search is made.
         $this->reset(['page', 'canLoadMore']);
     }
 
@@ -215,10 +243,6 @@ class Chats extends Component
                 // Manually load participants (only 2 expected in private/self)
                 $participants = $conversation->participants()->select('id', 'participantable_id', 'participantable_type', 'conversation_id', 'conversation_read_at')->with('participantable')->get();
                 $conversation->setRelation('participants', $participants);
-
-                // Set peer and auth participants
-                $conversation->auth_participant = $conversation->participant($this->auth);
-                $conversation->peer_participant = $conversation->peerParticipant($this->auth);
             }
         });
 
@@ -238,16 +262,22 @@ class Chats extends Component
      */
     public function hydrateConversations()
     {
+        // Ensure conversations is a Collection
+        if (!$this->conversations instanceof \Illuminate\Support\Collection) {
+            $this->conversations = collect($this->conversations);
+        }
+        
+        // Guard against empty collection
+        if ($this->conversations->isEmpty()) {
+            return;
+        }
+        
         $this->conversations->map(function ($conversation) {
             // Only load participants manually if not a group
             if (! $conversation->isGroup()) {
                 $participants = $conversation->participants()->select('id', 'participantable_id', 'participantable_type', 'conversation_id', 'conversation_read_at')->with(['participantable', 'actions'])->get();
 
                 $conversation->setRelation('participants', $participants);
-
-                // Set peer and auth participants
-                $conversation->auth_participant = $conversation->participant($this->auth);
-                $conversation->peer_participant = $conversation->peerParticipant(reference: $this->auth);
             }
 
             return $conversation->loadMissing([
@@ -262,7 +292,7 @@ class Chats extends Component
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
-    #[Computed(persist: true)]
+    #[Computed]
     public function auth()
     {
         return auth()->user();
@@ -278,18 +308,21 @@ class Chats extends Component
         $searchableFields = WireChat::searchableFields();
         $groupSearchableFields = ['name', 'description'];
         $columnCache = [];
+        
+        // Ensure search is a string
+        $searchTerm = is_string($this->search) ? $this->search : '';
 
         // Use withDeleted to reverse withoutDeleted in order to make deleted chats appear in search.
         /** @phpstan-ignore-next-line */
-        return $query->withDeleted()->where(function ($query) use ($searchableFields, $groupSearchableFields, &$columnCache) {
+        return $query->withDeleted()->where(function ($query) use ($searchableFields, $groupSearchableFields, &$columnCache, $searchTerm) {
             // Search in participants' participantable fields.
-            $query->whereHas('participants', function ($subquery) use ($searchableFields, &$columnCache) {
-                $subquery->whereHas('participantable', function ($query2) use ($searchableFields, &$columnCache) {
-                    $query2->where(function ($query3) use ($searchableFields, &$columnCache) {
+            $query->whereHas('participants', function ($subquery) use ($searchableFields, &$columnCache, $searchTerm) {
+                $subquery->whereHas('participantable', function ($query2) use ($searchableFields, &$columnCache, $searchTerm) {
+                    $query2->where(function ($query3) use ($searchableFields, &$columnCache, $searchTerm) {
                         $table = $query3->getModel()->getTable();
                         foreach ($searchableFields as $field) {
                             if ($this->columnExists($table, $field, $columnCache)) {
-                                $query3->orWhere($field, 'LIKE', '%'.$this->search.'%');
+                                $query3->orWhere($field, 'LIKE', '%'.$searchTerm.'%');
                             }
                         }
                     });
@@ -297,10 +330,10 @@ class Chats extends Component
             });
 
             // Search in group fields directly.
-            return $query->orWhereHas('group', function ($groupQuery) use ($groupSearchableFields) {
-                $groupQuery->where(function ($query4) use ($groupSearchableFields) {
+            return $query->orWhereHas('group', function ($groupQuery) use ($groupSearchableFields, $searchTerm) {
+                $groupQuery->where(function ($query4) use ($groupSearchableFields, $searchTerm) {
                     foreach ($groupSearchableFields as $field) {
-                        $query4->orWhere($field, 'LIKE', '%'.$this->search.'%');
+                        $query4->orWhere($field, 'LIKE', '%'.$searchTerm.'%');
                     }
                 });
             });

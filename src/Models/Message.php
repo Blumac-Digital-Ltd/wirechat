@@ -187,7 +187,7 @@ class Message extends Model
     }
 
     // Relationship for the parent message
-    public function parent(): belongsTo
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(Message::class, 'reply_id')->withoutGlobalScope(WithoutRemovedMessages::class)->withTrashed();
     }

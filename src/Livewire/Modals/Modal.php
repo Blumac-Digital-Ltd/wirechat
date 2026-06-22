@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Reflector;
 use Livewire\Component;
-use Livewire\Mechanisms\ComponentRegistry;
 
 class Modal extends Component
 {
@@ -31,7 +30,14 @@ class Modal extends Component
 
     public function openWireChatModal($component, $arguments = [], $modalAttributes = []): void
     {
-        $componentClass = app(ComponentRegistry::class)->getClass($component);
+        // Support both Livewire 3.x and 4.x
+        if (class_exists('Livewire\Mechanisms\ComponentRegistry')) {
+            // Livewire 3.x
+            $componentClass = app('Livewire\Mechanisms\ComponentRegistry')->getClass($component);
+        } else {
+            // Livewire 4.x
+            $componentClass = app('livewire.factory')->resolveComponentClass($component);
+        }
         $id = md5($component.serialize($arguments));
 
         $arguments = collect($arguments)
